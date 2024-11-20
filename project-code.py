@@ -4,12 +4,13 @@ import re
 import emoji
 import nltk
 from nltk.tokenize import word_tokenize
-from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 from transformers import BertTokenizer, BertModel
 import torch
+
 # Download the necessary NLTK data files
-# nltk.download('punkt')
-nltk.download('punkt_tab')
+nltk.download('punkt')
+nltk.download('stopwords')
 
 # Load the data
 file_path = 'sentiment data.csv'
@@ -35,21 +36,26 @@ data.columns = data.columns.str.strip()
 # Ensure the 'Sentiment' column is in lowercase
 data['Sentiment'] = data['Sentiment'].str.lower()
 
-# Remove any non-alphanumeric characters and emojis from the 'Sentence' column
+# Remove any non-alphanumeric characters, emojis, and sequences of dots from the 'Sentence' column
 def clean_text(text):
+    text = re.sub(r'\.{2,}', '', text)  # Remove sequences of dots
     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Remove non-alphanumeric characters
     text = emoji.replace_emoji(text, replace='')  # Remove emojis
     return text
 
 data['Sentence'] = data['Sentence'].apply(clean_text)
 
+# Remove stopwords
+stop_words = set(stopwords.words('english'))
+def remove_stopwords(text):
+    tokens = word_tokenize(text)
+    tokens = [word for word in tokens if word.lower() not in stop_words]
+    return ' '.join(tokens)
+
+data['Sentence'] = data['Sentence'].apply(remove_stopwords)
+
 # Tokenization: Break down sentences into individual words or tokens
 data['Tokens'] = data['Sentence'].apply(word_tokenize)
-# Verify the changes
-print("\nCleaned and Tokenized Data Info:")
-print(data.info())
-print("\nCleaned and Tokenized Data Head:")
-print(data.head())
 
 # Text Embedding using BERT
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -60,7 +66,6 @@ def embed_text(text):
     with torch.no_grad():
         outputs = model(**inputs)
     return outputs.last_hidden_state.mean(dim=1).detach().cpu().numpy()
-    # return outputs.last_hidden_state.mean(dim=1).detach().numpy()
 
 data['Embedding'] = data['Sentence'].apply(embed_text)
 
