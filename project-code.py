@@ -45,6 +45,17 @@ def clean_text(text):
 
 data['Sentence'] = data['Sentence'].apply(clean_text)
 
+# Verify the changes
+print("\nCleaned Data Info:")
+print(data.info())
+print("\nCleaned Data Head:")
+print(data.head())
+
+# Save the cleaned data to a new CSV file
+cleaned_file_path = 'cleaned_sentiment_data.csv'
+data.to_csv(cleaned_file_path, index=False)
+print(f"\nCleaned data saved to {cleaned_file_path}")
+
 # Remove stopwords
 stop_words = set(stopwords.words('english'))
 def remove_stopwords(text):
@@ -53,29 +64,34 @@ def remove_stopwords(text):
     return ' '.join(tokens)
 
 data['Sentence'] = data['Sentence'].apply(remove_stopwords)
+# Verify the changes
+print("\nRemove stopwords Data Info:")
+print(data.info())
+print("\nRemove stopwords Data Head:")
+print(data.head())
+
+# Save the Remove stopwords data to a new CSV file
+cleaned_file_path = 'remove_stopwords_sentiment_data.csv'
+data.to_csv(cleaned_file_path, index=False)
+print(f"\nRemove stopwords saved to {cleaned_file_path}")
 
 # Tokenization: Break down sentences into individual words or tokens
 data['Tokens'] = data['Sentence'].apply(word_tokenize)
 
-# Text Embedding using BERT
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertModel.from_pretrained('bert-base-uncased')
-
-def embed_text(text):
-    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True, max_length=512)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).detach().cpu().numpy()
-
-data['Embedding'] = data['Sentence'].apply(embed_text)
-
 # Verify the changes
-print("\nCleaned, Tokenized, and Embedded Data Info:")
+print("\nTokenized Data Info:")
 print(data.info())
-print("\nCleaned, Tokenized, and Embedded Data Head:")
+print("\nTokenized Data Head:")
 print(data.head())
 
-# Save the cleaned, tokenized, and embedded data to a new CSV file
-cleaned_file_path = 'cleaned_tokenized_embedded_sentiment_data.csv'
+# Save the tokenized data to a new CSV file
+cleaned_file_path = 'tokenized_sentiment_data.csv'
 data.to_csv(cleaned_file_path, index=False)
-print(f"\nCleaned, tokenized, and embedded data saved to {cleaned_file_path}")
+print(f"\nTokenized data saved to {cleaned_file_path}")
+print("\nTokenized Data Head:")
+print(data.head())
+
+# Load the pre-trained FinBERT model and tokenizer
+# model_name = 'yiyanghkust/finbert-tone'
+# tokenizer = BertTokenizer.from_pretrained(model_name)
+# model = BertModel.from_pretrained(model_name)
