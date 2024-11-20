@@ -5,12 +5,14 @@ import emoji
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 from transformers import BertTokenizer, BertModel
 import torch
 
 # Download the necessary NLTK data files
 nltk.download('punkt')
 nltk.download('stopwords')
+nltk.download('wordnet')
 
 # Load the data
 file_path = 'sentiment data.csv'
@@ -74,6 +76,28 @@ print(data.head())
 cleaned_file_path = 'remove_stopwords_sentiment_data.csv'
 data.to_csv(cleaned_file_path, index=False)
 print(f"\nRemove stopwords saved to {cleaned_file_path}")
+
+# Lemmatization
+lemmatizer = WordNetLemmatizer()
+
+def lemmatize_text(text):
+    tokens = word_tokenize(text)
+    lemmatized = [lemmatizer.lemmatize(word) for word in tokens]
+    return ' '.join(lemmatized)
+
+data['Sentence'] = data['Sentence'].apply(lemmatize_text)
+
+# Verify the changes
+print("\nStemming/Lemmatization Data Info:")
+print(data.info())
+print("\nStemming/Lemmatization Data Head:")
+print(data.head())
+
+# Save the Stemming/Lemmatization data to a new CSV file
+cleaned_file_path = 'stem_lemmatize_sentiment_data.csv'
+data.to_csv(cleaned_file_path, index=False)
+print(f"\nStemming/Lemmatization data saved to {cleaned_file_path}")
+
 
 # Tokenization: Break down sentences into individual words or tokens
 data['Tokens'] = data['Sentence'].apply(word_tokenize)
