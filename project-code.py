@@ -98,7 +98,6 @@ cleaned_file_path = 'stem_lemmatize_sentiment_data.csv'
 data.to_csv(cleaned_file_path, index=False)
 print(f"\nStemming/Lemmatization data saved to {cleaned_file_path}")
 
-
 # Tokenization: Break down sentences into individual words or tokens
 data['Tokens'] = data['Sentence'].apply(word_tokenize)
 
@@ -115,7 +114,26 @@ print(f"\nTokenized data saved to {cleaned_file_path}")
 print("\nTokenized Data Head:")
 print(data.head())
 
-# Load the pre-trained FinBERT model and tokenizer
-# model_name = 'yiyanghkust/finbert-tone'
-# tokenizer = BertTokenizer.from_pretrained(model_name)
-# model = BertModel.from_pretrained(model_name)
+# Feature Extraction using FinBERT
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+finbert_tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
+finbert_model = BertModel.from_pretrained('yiyanghkust/finbert-tone').to(device)
+
+def embed_text_with_finbert(text):
+    inputs = finbert_tokenizer(text, return_tensors='pt', truncation=True, padding=True, max_length=512).to(device)
+    with torch.no_grad():
+        outputs = finbert_model(**inputs)
+    return outputs.last_hidden_state.mean(dim=1).detach().cpu().numpy()
+
+data['Embedding'] = data['Sentence'].apply(embed_text_with_finbert)
+
+# Verify the changes
+print("\nCleaned, Tokenized, and Embedded Data Info:")
+print(data.info())
+print("\nCleaned, Tokenized, and Embedded Data Head:")
+print(data.head())
+
+# Save the cleaned, tokenized, and embedded data to a new CSV file
+cleaned_file_path = 'cleaned_tokenized_embedded_sentiment_data_with_finbert.csv'
+data.to_csv(cleaned_file_path, index=False)
+print(f"\nCleaned, tokenized, and embedded data saved to {cleaned_file_path}")
